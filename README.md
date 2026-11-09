@@ -1,59 +1,73 @@
 # power-plant-data-checks
 
 Data-quality checks in plain SQL on the Bundesnetzagentur power plant list (Kraftwerksliste)
-and its list of expected additions and closures. The checks look for missing, inconsistent,
+and its lists of expected additions and closures. The checks look for missing, inconsistent,
 duplicate and outdated records and write a work list (CSV) with one row per finding, so someone
 can go through it and fix or confirm each record.
 
 ## Results
 
-Run on the data published with Datenstand 26.06.2026. The list has 2,614 rows. 2,169 of them
-are unit records with a MaStR id; the rest are aggregates (small units summed per federal state
-and energy carrier) and are not checked. The change lists hold 27 expected additions and 40
-expected closures.
+Run on the files published with Datenstand 26.06.2026 (`results/source.json` has their
+checksums). Counts are from `results/summary.md`, the findings from `results/worklist.csv`, which
+shows each unit's status and the values behind each finding.
+
+- Power plant list: 2,614 rows. 2,169 are unit records (they have an id or a name); the rest are
+  aggregates of small units and are not checked. 117 of the unit ids are older BNA numbers, the
+  rest MaStR numbers.
+- Expected additions: 37 (10 without an id yet). Expected closures: 40.
 
 | check | finding | rows |
 |---|---|---|
-| missing | decommissioned unit without commissioning year | 1 |
-| inconsistent | net capacity above gross capacity (Datteln: 113 MW net, 95 MW gross) | 1 |
-| inconsistent | MaStR id with a leading tab character in the list of expected additions | 1 |
-| duplicate | same operator, name, capacity and commissioning year as another unit | 13 (4 groups) |
-| cross-source | expected closure (Stuttgart-Münster GT 18) not found in the main list | 1 |
-
-The full list is in `results/worklist.csv`, the counts in `results/summary.md`, and
-`results/source.json` records the data date and the SHA-256 of the two files these results came from.
+| missing | no commissioning year (BNA1337a, closed in 2012) | 1 |
+| inconsistent | net capacity above gross capacity (BNA0189 Datteln: net 113 MW, gross 95 MW; closed in 2013) | 1 |
+| inconsistent | id published with hidden whitespace: `'BNA0705 '` in the main list, a leading tab before SEE918810715130 in the additions list | 2 |
+| duplicates | several ids with the same operator, name, capacity and commissioning year | 28 (10 groups) |
+| cross_source | expected closure not found in the main list, by id or by name (Heizkraftwerk Stuttgart-Münster GT 18, 23.4 MW) | 1 |
+| vocabulary | values outside the known lists of energy carriers, statuses and flags | 0 |
 
 What these numbers mean:
 
-- The official list is clean in most respects. No missing values in the active units, no
-  duplicate ids, no renewable flag that contradicts the energy carrier, no unit commissioned
-  after the data date. The findings are few and specific.
-- A flag is a reason to look, not proof of an error. Two identical units at one site can be
-  real (one duplicate group is five ENGIE units with the same name, capacity and year).
-- 238 permanently decommissioned units are published without an operator. The checks do not flag
-  them, because this looks like a deliberate publication choice.
-- The id with a tab character is the kind of error that hides: a plain join on the id silently
-  drops that unit. The loader strips whitespace, and the check reports where it had to.
+- The list is clean in the checked fields for almost all units. The findings are few, and several
+  concern units that closed more than ten years ago.
+- A duplicate flag is a reason to look, not proof of an error. Six of the ten groups are closed
+  units with older BNA ids (for example four Brunsbüttel units of 63.5 MW from 1973), which are
+  probably real, identical blocks. The most interesting group is "Gasturbine 1 - GuD MPE": two
+  ids with the same capacity and year, one in operation and one temporarily closed.
+- The ids with hidden whitespace matter in practice: a plain join on the id silently drops those
+  units. The loader keeps the id as published and reports where it had to clean it.
+- Stuttgart-Münster GT 18 is in the list of expected closures, while its sister units GT 16 and
+  GT 17 (23.3 MW each) are in the main list and GT 18 is not, under any id or name.
+- Not flagged: 238 permanently closed units are published without an operator. The list appears
+  to leave the operator out for closed units, so the checks only require it for other units.
 
 ## The checks
 
 Each check is one SQL file in `ppcheck/checks/` and returns the same columns
-(`check_name, mastr_id, operator, name, field, issue`).
+(`check_name, unit_id, operator, name, status, field, issue, detail`). The expected values (18
+energy carriers with their renewable flag, 10 statuses grouped into operating, reserve,
+temporarily closed, closing and closed) are reference tables in `ppcheck/load.py`.
 
 | file | what it looks for |
 |---|---|
-| `missing.sql` | empty required fields: name, capacity, commissioning year, federal state (only for plants in Germany), decommissioning year for decommissioned units, operator for units that are not decommissioned |
-| `inconsistent.sql` | fields that contradict each other: net above gross capacity, non-positive capacity, decommissioned before commissioned, commissioning after the data date, "in operation" with a decommissioning year, renewable flag against energy carrier, ids with hidden whitespace |
-| `duplicates.sql` | the same id twice, or different ids with the same operator, name, capacity and commissioning year |
-| `cross_source.sql` | the main list and the change lists disagree: an expected addition that is decommissioned or in reserve, an expected closure that is already closed or missing from the main list, a unit listed as both addition and closure |
+| `missing.sql` | empty id, name, status, energy carrier, net or gross capacity, commissioning year, country; federal state for plants in Germany; decommissioning year for closed units; operator for units that are not closed |
+| `inconsistent.sql` | net above gross capacity, non-positive capacity, decommissioned before commissioned, commissioning after the data date, in operation with a decommissioning year, renewable flag against energy carrier, ids with hidden whitespace in any of the files |
+| `duplicates.sql` | the same id twice, or different ids with the same operator, name, capacity and commissioning year (compared NULL-safely) |
+| `cross_source.sql` | the files disagree: an expected addition shown as closed or in reserve, an expected closure already closed, not in the main list, or listed under another id, a unit both added and closed |
+| `vocabulary.sql` | energy carriers, statuses, renewable flags or record types not in the reference lists, so a new or misspelled value cannot make a rule silently pass |
 
 Example, from `cross_source.sql`:
 
 ```sql
-SELECT c.mastr_id, c.operator, c.name, 'mastr_id', 'expected closure not found in the main list'
+SELECT c.unit_id, c.operator, c.name, NULL, 'unit_id',
+       'expected closure not found in the main list, by id or by name', c.mw || ' MW, ' || c.place
   FROM closures c
- WHERE c.mastr_id NOT IN (SELECT mastr_id FROM plants WHERE mastr_id IS NOT NULL)
+ WHERE c.unit_id IS NOT NULL
+   AND c.unit_id NOT IN (SELECT unit_id FROM plants WHERE unit_id IS NOT NULL)
+   AND lower(trim(c.name)) NOT IN (SELECT lower(trim(name)) FROM plants WHERE name IS NOT NULL)
 ```
+
+The `IS NOT NULL` inside the subqueries matters: `x NOT IN (...)` is never true when the subquery
+returns a NULL.
 
 ## Run it
 
@@ -65,13 +79,20 @@ SELECT c.mastr_id, c.operator, c.name, 'mastr_id', 'expected closure not found i
 
 The data is loaded into an in-memory SQLite database; the only dependency is `openpyxl` for the
 Excel file. The Bundesnetzagentur updates the files regularly, so a later download can give
-different results; compare its checksums with `results/source.json`. If the file layout changes
-(a column renamed, the sheet renamed), the loader stops with an error instead of reporting
-everything as missing.
+different results; compare its checksums with `results/source.json`. If the layout changes (a CSV
+column or the sheet renamed, the Excel columns reordered, no data date), the loader stops with an
+error instead of producing wrong results.
 
-`tests/` has one test per check on a small synthetic table with known defects, plus tests for the
-CSV and Excel parsing (decimal commas, the title lines above the header, the two tables on one
-sheet, ids with whitespace), for a changed file layout, and for the output files.
+`tests/` has a case that must be flagged for every rule (and cases that must not be, such as
+plants abroad without a federal state or the aggregate rows), plus tests for the parsing: decimal
+commas, the title lines above the header, the two tables on one sheet, rows without an id, ids
+with whitespace, and a changed layout.
+
+## How it was built
+
+The code and this README were written with an AI coding assistant (Claude Code). Each finding
+above was checked by hand against the raw files, and the project was reviewed by a second AI
+model, which found bugs that are fixed in the commit history.
 
 ## Data and licence
 
@@ -85,8 +106,11 @@ Code: MIT, see `LICENSE`.
 
 ## Limitations
 
-- The rules are mine. Someone who works with the Marktstammdatenregister would add others (for
-  example plausibility of capacity per technology, or location checks).
-- Duplicate detection is exact after lowercasing and trimming. Names that differ only in spelling
-  or spacing are not matched.
-- The checks run on one snapshot. They do not track how records change between releases.
+- The rules were written for this project from the published file. Someone who works with the
+  Marktstammdatenregister would add others, for example capacity ranges per technology or
+  location checks.
+- Duplicate detection is exact after lowercasing and trimming; names that differ in spelling or
+  spacing are not matched. Name matching across the files is exact in the same way.
+- The decommissioning year follows the file's footnote: units closed on 31 December are counted
+  in the following year. A rule comparing years can be off by one around the turn of a year.
+- The checks run on one snapshot and do not track changes between releases.

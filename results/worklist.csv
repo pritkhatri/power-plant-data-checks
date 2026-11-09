@@ -1,18 +1,34 @@
-check_name,mastr_id,operator,name,field,issue
-missing,BNA1337a,,Heizkraftwerk,year_commissioned,no commissioning year
-inconsistent,SEE918810715130,Mainova AG,"HKW West, Block 11",mastr_id,id in the list of expected additions has whitespace
-inconsistent,BNA0189,,Datteln,net_mw,net capacity above gross capacity
-duplicate,SEE929808661773,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE948545926433,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE956808243722,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE957602727647,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE984068604342,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE904748267797,ENGIE Deutschland GmbH,SEDE607510037,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE949816813650,ENGIE Deutschland GmbH,SEDE607510037,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE968905685947,ENGIE Deutschland GmbH,SEDE607510037,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE971156902916,ENGIE Deutschland GmbH,SEDE607510037,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE938158660541,Mitsubishi HiTec Paper Europe GmbH,Gasturbine 1 - GuD MPE,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE972475289894,Mitsubishi HiTec Paper Europe GmbH,Gasturbine 1 - GuD MPE,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE915885358156,Stadtwerke Duisburg AG,HKW III  Block B,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-duplicate,SEE922855765289,Stadtwerke Duisburg AG,HKW III  Block B,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
-cross_source,SEE985887784048,EnBW Energie Baden-Württemberg AG,Heizkraftwerk Stuttgart-Münster GT 18,mastr_id,expected closure not found in the main list
+check_name,unit_id,operator,name,status,field,issue,detail
+missing,BNA1337a,,Heizkraftwerk,endgültig stillgelegt ohne § 13b EnWG oder KVBG,year_commissioned,no commissioning year,decommissioned in 2012
+inconsistent,BNA0189,,Datteln,endgültig stillgelegt ohne § 13b EnWG oder KVBG,net_mw,net capacity above gross capacity,"net 113.0 MW, gross 95.0 MW, decommissioned in 2013"
+inconsistent,BNA0705,,Niederaußem D,endgültig stillgelegt nach KVBG,unit_id,id in the main list has whitespace,published as 'BNA0705·'
+inconsistent,SEE918810715130,Mainova AG,"HKW West, Block 11",,unit_id,id in the list of expected additions has whitespace,published as '\tSEE918810715130'
+duplicates,BNA0161,,Brunsbüttel,endgültig stillgelegt nach § 13b EnWG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","4 units, 63.5 MW, commissioned 1973"
+duplicates,BNA0162,,Brunsbüttel,endgültig stillgelegt nach § 13b EnWG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","4 units, 63.5 MW, commissioned 1973"
+duplicates,BNA0163,,Brunsbüttel,endgültig stillgelegt nach § 13b EnWG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","4 units, 63.5 MW, commissioned 1973"
+duplicates,BNA0164,,Brunsbüttel,endgültig stillgelegt nach § 13b EnWG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","4 units, 63.5 MW, commissioned 1973"
+duplicates,BNA0187,,Datteln,endgültig stillgelegt ohne § 13b EnWG oder KVBG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 95.0 MW, commissioned 1964"
+duplicates,BNA0188,,Datteln,endgültig stillgelegt ohne § 13b EnWG oder KVBG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 95.0 MW, commissioned 1964"
+duplicates,BNA1127,,GHD,endgültig stillgelegt ohne § 13b EnWG oder KVBG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 6.7 MW, commissioned 1997"
+duplicates,BNA1128,,GHD,endgültig stillgelegt ohne § 13b EnWG oder KVBG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 6.7 MW, commissioned 1997"
+duplicates,BNA0710,,Niederaußem,endgültig stillgelegt ohne § 13b EnWG oder KVBG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 125.0 MW, commissioned 1963"
+duplicates,BNA0711,,Niederaußem,endgültig stillgelegt ohne § 13b EnWG oder KVBG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 125.0 MW, commissioned 1963"
+duplicates,BNA0735,,Thyrow,endgültig stillgelegt nach § 13b EnWG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","3 units, 37.5 MW, commissioned 1989"
+duplicates,BNA0736,,Thyrow,endgültig stillgelegt nach § 13b EnWG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","3 units, 37.5 MW, commissioned 1989"
+duplicates,BNA0737,,Thyrow,endgültig stillgelegt nach § 13b EnWG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","3 units, 37.5 MW, commissioned 1989"
+duplicates,BNA0414,,Westfalen,endgültig stillgelegt ohne § 13b EnWG oder KVBG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 152.0 MW, commissioned 1963"
+duplicates,BNA0415,,Westfalen,endgültig stillgelegt ohne § 13b EnWG oder KVBG,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 152.0 MW, commissioned 1963"
+duplicates,SEE929808661773,ENGIE Deutschland GmbH,SEDE607510036,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","5 units, 4.472 MW, commissioned 2018"
+duplicates,SEE948545926433,ENGIE Deutschland GmbH,SEDE607510036,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","5 units, 4.472 MW, commissioned 2018"
+duplicates,SEE956808243722,ENGIE Deutschland GmbH,SEDE607510036,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","5 units, 4.472 MW, commissioned 2018"
+duplicates,SEE957602727647,ENGIE Deutschland GmbH,SEDE607510036,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","5 units, 4.472 MW, commissioned 2018"
+duplicates,SEE984068604342,ENGIE Deutschland GmbH,SEDE607510036,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","5 units, 4.472 MW, commissioned 2018"
+duplicates,SEE904748267797,ENGIE Deutschland GmbH,SEDE607510037,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","4 units, 4.387 MW, commissioned 2018"
+duplicates,SEE949816813650,ENGIE Deutschland GmbH,SEDE607510037,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","4 units, 4.387 MW, commissioned 2018"
+duplicates,SEE968905685947,ENGIE Deutschland GmbH,SEDE607510037,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","4 units, 4.387 MW, commissioned 2018"
+duplicates,SEE971156902916,ENGIE Deutschland GmbH,SEDE607510037,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","4 units, 4.387 MW, commissioned 2018"
+duplicates,SEE938158660541,Mitsubishi HiTec Paper Europe GmbH,Gasturbine 1 - GuD MPE,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 14.05 MW, commissioned 2005"
+duplicates,SEE972475289894,Mitsubishi HiTec Paper Europe GmbH,Gasturbine 1 - GuD MPE,vorläufig Stillgelegt,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 14.05 MW, commissioned 2005"
+duplicates,SEE915885358156,Stadtwerke Duisburg AG,HKW III  Block B,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 75.2 MW, commissioned 2004"
+duplicates,SEE922855765289,Stadtwerke Duisburg AG,HKW III  Block B,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 75.2 MW, commissioned 2004"
+cross_source,SEE985887784048,EnBW Energie Baden-Württemberg AG,Heizkraftwerk Stuttgart-Münster GT 18,,unit_id,"expected closure not found in the main list, by id or by name","23.4 MW, Stuttgart"
