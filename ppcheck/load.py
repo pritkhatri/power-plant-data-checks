@@ -24,6 +24,7 @@ PLANT_COLUMNS = {
     "Bruttoleistung_MW": "gross_mw",
     "Nettonennleistung_MW": "net_mw",
 }
+SHEET = "Zu- und Rückbau einzeln"
 NUMERIC = {"year_commissioned", "year_decommissioned", "gross_mw", "net_mw"}
 
 SCHEMA = """
@@ -58,7 +59,15 @@ def read_plant_csv(text: str) -> tuple[list[dict], str | None]:
     Returns the rows with English column names and the data date ("Datenstand") if present.
     """
     lines = text.splitlines()
-    header = next(i for i, line in enumerate(lines) if line.startswith("Datensatztyp"))
+    header = next((i for i, line in enumerate(lines) if line.startswith("Datensatztyp")), None)
+    if header is None:
+        raise ValueError(
+            "no header line starting with 'Datensatztyp' found; has the format changed?"
+        )
+    present = set(next(csv.reader([lines[header]], delimiter=";")))
+    absent = [c for c in PLANT_COLUMNS if c not in present]
+    if absent:
+        raise ValueError(f"columns missing from the power plant list: {absent}")
     m = re.search(r"Datenstand:\s*([0-9.]+)", "\n".join(lines[:header]))
     rows = []
     for raw in csv.DictReader(io.StringIO("\n".join(lines[header:])), delimiter=";"):
@@ -88,7 +97,9 @@ def read_change_lists(path: str | Path) -> tuple[list[dict], list[dict]]:
     import openpyxl
 
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    ws = wb["Zu- und Rückbau einzeln"]
+    if SHEET not in wb.sheetnames:
+        raise ValueError(f"sheet {SHEET!r} not found; sheets are {wb.sheetnames}")
+    ws = wb[SHEET]
     additions, closures, table = [], [], None
     for r in ws.iter_rows(values_only=True):
         first = r[1]
@@ -107,6 +118,8 @@ def read_change_lists(path: str | Path) -> tuple[list[dict], list[dict]]:
                 {"raw_id": first, "mastr_id": first.strip(), "operator": r[2], "name": r[3],
                  "category": r[6], "energy_carrier": r[7], "mw": r[8]}
             )  # fmt: skip
+    if not additions or not closures:
+        raise ValueError("expected both an additions table and a closures table on the sheet")
     return additions, closures
 
 

@@ -20,7 +20,8 @@ expected closures.
 | duplicate | same operator, name, capacity and commissioning year as another unit | 13 (4 groups) |
 | cross-source | expected closure (Stuttgart-Münster GT 18) not found in the main list | 1 |
 
-The full list is in `results/worklist.csv`, the counts in `results/summary.md`.
+The full list is in `results/worklist.csv`, the counts in `results/summary.md`, and
+`results/source.json` records the data date and the SHA-256 of the two files these results came from.
 
 What these numbers mean:
 
@@ -28,7 +29,7 @@ What these numbers mean:
   duplicate ids, no renewable flag that contradicts the energy carrier, no unit commissioned
   after the data date. The findings are few and specific.
 - A flag is a reason to look, not proof of an error. Two identical units at one site can be
-  real (one duplicate group is five units of the same size at one ENGIE site).
+  real (one duplicate group is five ENGIE units with the same name, capacity and year).
 - 238 permanently decommissioned units are published without an operator. The checks do not flag
   them, because this looks like a deliberate publication choice.
 - The id with a tab character is the kind of error that hides: a plain join on the id silently
@@ -58,16 +59,19 @@ SELECT c.mastr_id, c.operator, c.name, 'mastr_id', 'expected closure not found i
 
     python -m venv .venv && source .venv/bin/activate
     pip install -e ".[dev]"
-    python -m ppcheck      # downloads the two files to data/raw/, runs the checks, writes results/
+    python -m ppcheck              # downloads the two files to data/raw/, runs the checks, writes results/
+    python -m ppcheck --refresh    # download the files again first
     pytest
 
 The data is loaded into an in-memory SQLite database; the only dependency is `openpyxl` for the
-Excel file. `data/raw/SOURCE.json` records the download URLs and SHA-256 checksums. The
-Bundesnetzagentur updates the files regularly, so a later download can give different results.
+Excel file. The Bundesnetzagentur updates the files regularly, so a later download can give
+different results; compare its checksums with `results/source.json`. If the file layout changes
+(a column renamed, the sheet renamed), the loader stops with an error instead of reporting
+everything as missing.
 
 `tests/` has one test per check on a small synthetic table with known defects, plus tests for the
 CSV and Excel parsing (decimal commas, the title lines above the header, the two tables on one
-sheet, ids with whitespace).
+sheet, ids with whitespace), for a changed file layout, and for the output files.
 
 ## Data and licence
 

@@ -68,14 +68,26 @@ def write_results(results: dict, con: sqlite3.Connection, out_dir: str | Path = 
     (out / "summary.md").write_text("\n".join(lines) + "\n")
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    import argparse
+    import json
+
     from .download import download
     from .load import load_files
 
-    download()
+    parser = argparse.ArgumentParser(prog="ppcheck", description=__doc__)
+    parser.add_argument("--refresh", action="store_true", help="download the files again")
+    args = parser.parse_args(argv)
+
+    source = download(force=args.refresh)
     con = load_files("data/raw")
     results = run_checks(con)
     write_results(results, con)
+    data_date = con.execute("SELECT value FROM meta WHERE key='data_date'").fetchone()[0]
+    # which files these results came from, so a reader can check a later download against them
+    Path("results/source.json").write_text(
+        json.dumps({"data_date": data_date, "files": source}, indent=2) + "\n"
+    )
     print(Path("results/summary.md").read_text())
 
 

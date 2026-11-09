@@ -79,3 +79,21 @@ def test_cross_source(results):
     assert ids(rows, "expected addition, but") == ["SEE11"]
     assert ids(rows, "already permanently decommissioned") == ["SEE10"]
     assert ids(rows, "not found in the main list") == ["SEE99"]
+
+
+def test_write_results_files(tmp_path):
+    import csv
+
+    from ppcheck.run import write_results
+
+    con = build_db(
+        [unit("SEE1"), unit("SEE2", net_mw=120.0)],
+        [{"raw_id": "SEE3", "mastr_id": "SEE3"}],
+        [{"raw_id": "SEE4", "mastr_id": "SEE4"}],
+        "26.06.2026",
+    )
+    write_results(run_checks(con), con, tmp_path)
+    rows = list(csv.DictReader(open(tmp_path / "worklist.csv", encoding="utf-8")))
+    assert {r["mastr_id"] for r in rows} == {"SEE2", "SEE4"}
+    summary = (tmp_path / "summary.md").read_text()
+    assert "26.06.2026" in summary and "| missing | (none found) | 0 |" in summary

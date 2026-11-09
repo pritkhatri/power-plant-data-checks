@@ -45,3 +45,24 @@ def test_read_change_lists_splits_tables_and_strips_ids(tmp_path):
     assert [(c["mastr_id"], c["energy_carrier"], c["mw"]) for c in closures] == [
         ("SEE2", "Braunkohle", 465)
     ]
+
+
+def test_changed_csv_layout_fails_loudly():
+    import pytest
+
+    broken = CSV.replace("Nettonennleistung_MW", "Netto_MW")
+    with pytest.raises(ValueError, match="Nettonennleistung_MW"):
+        read_plant_csv(broken)
+    with pytest.raises(ValueError, match="header"):
+        read_plant_csv("no;header;here\n1;2;3\n")
+
+
+def test_missing_sheet_fails_loudly(tmp_path):
+    import pytest
+
+    wb = openpyxl.Workbook()
+    wb.active.title = "Something else"
+    path = tmp_path / "zr.xlsx"
+    wb.save(path)
+    with pytest.raises(ValueError, match="not found"):
+        read_change_lists(path)

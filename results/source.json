@@ -1,0 +1,15 @@
+{
+  "data_date": "26.06.2026",
+  "files": {
+    "kraftwerksliste.csv": {
+      "url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/Versorgungssicherheit/Erzeugungskapazitaeten/Kraftwerksliste/_DL/Kraftwerksliste_CSV.csv?__blob=publicationFile",
+      "sha256": "c651f01ccff2ea0ce29bbba2c031192180e99ec23b0ee4c70d1e53f223e5e26a",
+      "downloaded": "2026-11-09"
+    },
+    "zu_und_rueckbau.xlsx": {
+      "url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/Versorgungssicherheit/Erzeugungskapazitaeten/Kraftwerksliste/_DL/ZuUndRueckbau.xlsx?__blob=publicationFile",
+      "sha256": "c9a69e50c824e22bf98e53952dbed709232f95394e386d5ca199f1d2a6b8d9d7",
+      "downloaded": "2026-11-09"
+    }
+  }
+}
