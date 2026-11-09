@@ -11,6 +11,7 @@ UNION ALL
 SELECT 'duplicates', p.unit_id, p.operator, p.name, p.status, 'operator+name+net_mw+year',
        'same operator, name, capacity and year as another unit',
        g.n || ' units, ' || p.net_mw || ' MW, commissioned ' || p.year_commissioned
+       || COALESCE(', ' || p.technology, '')
   FROM plants p
   JOIN (SELECT lower(trim(operator)) AS o, lower(trim(name)) AS nm, net_mw, year_commissioned,
                COUNT(DISTINCT unit_id) AS n

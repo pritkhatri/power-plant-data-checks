@@ -15,7 +15,7 @@ SELECT 'vocabulary' AS check_name, unit_id, operator, name, status, field, issue
     -- on every row, not only units: aggregates must carry a record type too
     SELECT unit_id, operator, name, status, 'record_type', 'missing or unknown record type',
            COALESCE(record_type, '(empty)') || ': ' || COALESCE(energy_carrier, '?') || ', '
-           || COALESCE(state, '?') || ', ' || net_mw || ' MW'
+           || COALESCE(state, '?') || ', ' || COALESCE(net_mw || ' MW', '? MW')
       FROM plants
      WHERE COALESCE(record_type, '') NOT IN (SELECT record_type FROM record_types)
 )

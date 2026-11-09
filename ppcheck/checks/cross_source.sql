@@ -29,6 +29,9 @@ SELECT 'cross_source' AS check_name, unit_id, operator, name, status, field, iss
            'expected closure listed in the main list under a different id',
            'main list id ' || p.unit_id
       FROM closures c JOIN plants p ON lower(trim(p.name)) = lower(trim(c.name))
+       -- a bare name like "Heizkraftwerk" is not enough: the operators must not contradict
+       AND (p.operator IS NULL OR c.operator IS NULL
+            OR lower(trim(p.operator)) = lower(trim(c.operator)))
      WHERE c.unit_id IS NOT NULL
        AND c.unit_id NOT IN (SELECT unit_id FROM plants WHERE unit_id IS NOT NULL)
     UNION ALL

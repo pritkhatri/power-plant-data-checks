@@ -30,6 +30,24 @@ def counts(con: sqlite3.Connection) -> dict[str, int | str]:
         "rows": q("SELECT COUNT(*) FROM plants"),
         "units": q("SELECT COUNT(*) FROM plants WHERE is_unit = 1"),
         "bna_ids": q("SELECT COUNT(*) FROM plants WHERE unit_id LIKE 'BNA%'"),
+        "bna_closed": q(
+            "SELECT COUNT(*) FROM plants p JOIN statuses s ON s.status = p.status "
+            "WHERE p.unit_id LIKE 'BNA%' AND s.kind = 'closed'"
+        ),
+        "closed_mastr": q(
+            "SELECT COUNT(*) FROM plants p JOIN statuses s ON s.status = p.status "
+            "WHERE p.is_unit = 1 AND s.kind = 'closed' AND p.unit_id LIKE 'SEE%'"
+        ),
+        "closed_mastr_without_operator": q(
+            "SELECT COUNT(*) FROM plants p JOIN statuses s ON s.status = p.status "
+            "WHERE p.is_unit = 1 AND s.kind = 'closed' AND p.unit_id LIKE 'SEE%' "
+            "AND p.operator IS NULL"
+        ),
+        "closed_bna_without_operator": q(
+            "SELECT COUNT(*) FROM plants p JOIN statuses s ON s.status = p.status "
+            "WHERE p.is_unit = 1 AND s.kind = 'closed' AND p.unit_id LIKE 'BNA%' "
+            "AND p.operator IS NULL"
+        ),
         "additions": q("SELECT COUNT(*) FROM additions"),
         "additions_without_id": q("SELECT COUNT(*) FROM additions WHERE unit_id IS NULL"),
         "additions_not_in_main_list": q(
@@ -76,13 +94,16 @@ def write_results(results: dict, con: sqlite3.Connection, out_dir: str | Path = 
         f"- Power plant list: {c['rows']} rows, of which {c['units']} are unit records (an id or "
         f"a name). The other rows have neither and are treated as aggregates ({c['non_units']}); "
         "the unit rules do not apply to them, the vocabulary check does. "
-        f"{c['bna_ids']} unit ids are older BNA numbers, the rest MaStR numbers.",
+        f"{c['bna_ids']} unit ids are older BNA numbers ({c['bna_closed']} of them on permanently "
+        "closed units), the rest MaStR numbers.",
         f"- Expected additions: {c['additions']}, of which {c['additions_without_id']} have no id "
         f"yet and {c['additions_not_in_main_list']} have an id that is not in the main list "
         "(normal for units still being built).",
         f"- Expected closures: {c['closures']}, of which {c['closures_without_id']} have no id.",
         f"- Operator: {c['closed_without_operator']} of {c['closed_units']} permanently closed "
-        f"units have none, units that are not closed lacking one: {c['other_without_operator']}. "
+        f"units have none ({c['closed_bna_without_operator']} with a BNA id, "
+        f"{c['closed_mastr_without_operator']} of {c['closed_mastr']} with a MaStR id); "
+        f"units that are not closed lacking one: {c['other_without_operator']}. "
         "The operator is therefore only required for units that are not closed.",
         "- The vocabulary check compares against reference lists built from this snapshot, so it "
         "guards later downloads; on this snapshot it can only flag rows outside the record types.",

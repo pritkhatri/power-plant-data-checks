@@ -14,7 +14,7 @@ CSV = (
     ";Quelle: Marktstammdatenregister Datenstand: 26.06.2026;;\n"
     "Datensatztyp*;EinheitMastrNummer;Anlagenbetreiber;Anzeigename;Bundesland;Land;"
     "Jahr_Inbetriebnahme;Jahr_Stilllegung**;Kraftwerksstatus;Energietraeger;Hauptbrennstoff;"
-    "Erneuerbarer_Energietraeger;Bruttoleistung_MW;Nettonennleistung_MW\n"
+    "Erneuerbarer_Energietraeger;Bruttoleistung_MW;Nettonennleistung_MW;Technologie_Stromerzeugung\n"
     "Einzelanlage;SEE1;Op;A;Bayern;Deutschland;1998;;InBetrieb;Erdgas;Erdgas;Nein;1.234,5;1.200\n"
     "stillgelegte Anlagen;BNA0705 ;;B;Bayern;Deutschland;1970;2010;endgültig stillgelegt;Erdgas;;"
     "Nein;95;113\n"

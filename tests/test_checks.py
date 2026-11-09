@@ -212,3 +212,21 @@ def test_decode_prefers_utf8_and_falls_back():
 
     assert decode("Niederaußem".encode()) == "Niederaußem"
     assert decode("Niederaußem".encode("latin1")) == "Niederaußem"
+
+
+def test_closure_name_match_needs_compatible_operator():
+    plants = [unit("P1", name="Heizkraftwerk", operator="Stadtwerke A")]
+    closures = [
+        change("C1", name="Heizkraftwerk", operator="Stadtwerke A"),  # same plant, other id
+        change("C2", name="Heizkraftwerk", operator="Energie B"),  # only the name is shared
+    ]
+    rows = run_checks(build_db(plants, [], closures, "26.06.2026"))["cross_source"]
+    assert ids(rows, "under a different id") == ["C1"]
+    assert ids(rows, "not found in the main list") == []  # the name exists, so C2 is not "absent"
+
+
+def test_duplicate_detail_shows_technology():
+    plants = [unit("T1", name="Block", technology="GasturbinenmitAbhitzekessel"),
+              unit("T2", name="Block", technology="GasturbinenmitAbhitzekessel")]  # fmt: skip
+    rows = run_checks(build_db(plants, [], [], "26.06.2026"))["duplicates"]
+    assert all("GasturbinenmitAbhitzekessel" in r["detail"] for r in rows)

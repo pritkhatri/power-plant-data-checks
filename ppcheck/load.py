@@ -29,6 +29,7 @@ PLANT_COLUMNS = {
     "Erneuerbarer_Energietraeger": "renewable",
     "Bruttoleistung_MW": "gross_mw",
     "Nettonennleistung_MW": "net_mw",
+    "Technologie_Stromerzeugung": "technology",
 }
 NUMERIC = {"year_commissioned", "year_decommissioned", "gross_mw", "net_mw"}
 SHEET = "Zu- und Rückbau einzeln"
@@ -70,7 +71,8 @@ SCHEMA = """
 CREATE TABLE plants (
     record_type TEXT, raw_unit_id TEXT, unit_id TEXT, is_unit INTEGER, operator TEXT, name TEXT,
     state TEXT, country TEXT, year_commissioned INTEGER, year_decommissioned INTEGER, status TEXT,
-    energy_carrier TEXT, main_fuel TEXT, renewable TEXT, gross_mw REAL, net_mw REAL
+    energy_carrier TEXT, main_fuel TEXT, renewable TEXT, gross_mw REAL, net_mw REAL,
+    technology TEXT
 );
 CREATE TABLE additions (
     raw_unit_id TEXT, unit_id TEXT, operator TEXT, name TEXT, postcode TEXT, place TEXT,
@@ -210,7 +212,7 @@ def build_db(plants, additions, closures, data_date, db=":memory:"):
 def decode(data: bytes) -> str:
     """The file is published in a Windows encoding (cp1252/Latin-1). If a later release is UTF-8,
     use that instead of silently garbling every umlaut."""
-    for encoding in ("utf-8", "cp1252"):
+    for encoding in ("utf-8-sig", "cp1252"):
         try:
             return data.decode(encoding)
         except UnicodeDecodeError:
