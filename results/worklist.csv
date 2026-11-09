@@ -1,0 +1,18 @@
+check_name,mastr_id,operator,name,field,issue
+missing,BNA1337a,,Heizkraftwerk,year_commissioned,no commissioning year
+inconsistent,SEE918810715130,Mainova AG,"HKW West, Block 11",mastr_id,id in the list of expected additions has whitespace
+inconsistent,BNA0189,,Datteln,net_mw,net capacity above gross capacity
+duplicate,SEE929808661773,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE948545926433,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE956808243722,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE957602727647,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE984068604342,ENGIE Deutschland GmbH,SEDE607510036,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE904748267797,ENGIE Deutschland GmbH,SEDE607510037,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE949816813650,ENGIE Deutschland GmbH,SEDE607510037,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE968905685947,ENGIE Deutschland GmbH,SEDE607510037,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE971156902916,ENGIE Deutschland GmbH,SEDE607510037,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE938158660541,Mitsubishi HiTec Paper Europe GmbH,Gasturbine 1 - GuD MPE,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE972475289894,Mitsubishi HiTec Paper Europe GmbH,Gasturbine 1 - GuD MPE,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE915885358156,Stadtwerke Duisburg AG,HKW III  Block B,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+duplicate,SEE922855765289,Stadtwerke Duisburg AG,HKW III  Block B,operator+name+net_mw+year,"same operator, name, capacity and year as another unit"
+cross_source,SEE985887784048,EnBW Energie Baden-Württemberg AG,Heizkraftwerk Stuttgart-Münster GT 18,mastr_id,expected closure not found in the main list
