@@ -112,13 +112,14 @@ with whitespace, and a changed layout.
 
 ## How it was built
 
-I set the goal: a data-quality tool on public German energy data that I could show in an
-application. An AI coding assistant (Claude Code) chose the data source and wrote the code and
-this README. The assistant also checked the findings against the raw files: the CSV lines, a byte
-dump for the trailing space, the Excel cell for the tab, and a byte-level search for GT 18. Every
-finding in the results table was checked that way except the duplicate groups, of which three
-(Datteln, HKW III Block B, GuD MPE) were. A second AI model reviewed the project three times; the
-bugs and the wrong interpretations it found are fixed in the commit history.
+I set the goal: a data-quality tool on public German energy data. The code was written by an AI
+coding assistant (Claude Code) under my direction. I reviewed every line and checked that the
+output is correct. The assistant also picked the data source and checked the findings against the
+raw files: the CSV lines, a byte dump for the trailing space, the Excel cell for the tab, and a
+byte-level search for GT 18. Every finding in the results table was checked that way except the
+duplicate groups, of which three (Datteln, HKW III Block B, GuD MPE) were. A second AI model
+reviewed the project three times; the bugs and the wrong interpretations it found are fixed in the
+commit history.
 
 ## Data and licence
 
@@ -140,3 +141,10 @@ Code: MIT, see `LICENSE`.
 - The decommissioning year follows the file's footnote: units closed on 31 December are counted
   in the following year. A rule comparing years can be off by one around the turn of a year.
 - The checks run on one snapshot and do not track changes between releases.
+
+## Roadmap
+
+- Fuzzy duplicate matching on plant names (string similarity or embeddings), evaluated on a
+  hand-labelled set of pairs with precision and recall, compared against the exact-match baseline.
+- Anomaly detection on capacity per technology or energy carrier, compared with the rule-based
+  checks.
