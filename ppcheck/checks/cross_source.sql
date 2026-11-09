@@ -3,7 +3,7 @@
 -- Units are matched by id; an unmatched closure is also looked up by name.
 SELECT 'cross_source' AS check_name, unit_id, operator, name, status, field, issue, detail FROM (
     SELECT a.unit_id, a.operator, a.name, p.status, 'status' AS field,
-           'expected addition, but the main list shows it closed or in reserve' AS issue,
+           'expected addition, but the main list shows it closed, closing, in reserve or with unknown status' AS issue,
            'expected start ' || a.expected_year AS detail
       FROM additions a JOIN plants p ON p.unit_id = a.unit_id
       LEFT JOIN statuses s ON s.status = p.status
@@ -22,7 +22,8 @@ SELECT 'cross_source' AS check_name, unit_id, operator, name, status, field, iss
       FROM closures c
      WHERE c.unit_id IS NOT NULL
        AND c.unit_id NOT IN (SELECT unit_id FROM plants WHERE unit_id IS NOT NULL)
-       AND lower(trim(c.name)) NOT IN (SELECT lower(trim(name)) FROM plants WHERE name IS NOT NULL)
+       AND (c.name IS NULL
+            OR lower(trim(c.name)) NOT IN (SELECT lower(trim(name)) FROM plants WHERE name IS NOT NULL))
     UNION ALL
     SELECT c.unit_id, c.operator, c.name, p.status, 'unit_id',
            'expected closure listed in the main list under a different id',

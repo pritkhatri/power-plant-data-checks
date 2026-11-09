@@ -11,9 +11,13 @@ Run on the files published with Datenstand 26.06.2026 (`results/source.json` has
 checksums). Counts are from `results/summary.md`, the findings from `results/worklist.csv`, which
 shows each unit's status and the values behind each finding.
 
-- Power plant list: 2,614 rows. 2,169 are unit records (they have an id or a name); the rest are
-  aggregates of small units and are not checked. 117 of the unit ids are older BNA numbers, the
-  rest MaStR numbers.
+- Power plant list: 2,614 rows. 2,169 are unit records (they have an id or a name). The other 445
+  have neither and are treated as aggregates: 290 "Kleinanlagen_aggregiert" (small units summed
+  per state and energy carrier, as the file's footnote defines), 154 "stillgelegte Anlagen" rows
+  with state, energy carrier, capacity and status but no id, name, year or operator (the footnote
+  does not define these; that they are aggregated closed units is my reading), and 1 row without a
+  record type. The unit rules skip these rows; the vocabulary check covers them. 117 of the unit
+  ids are older BNA numbers, all of them on permanently closed units, the rest MaStR numbers.
 - Expected additions: 37 (10 without an id yet). Expected closures: 40.
 
 | check | finding | rows |
@@ -23,22 +27,32 @@ shows each unit's status and the values behind each finding.
 | inconsistent | id published with hidden whitespace: `'BNA0705 '` in the main list, a leading tab before SEE918810715130 in the additions list | 2 |
 | duplicates | several ids with the same operator, name, capacity and commissioning year | 28 (10 groups) |
 | cross_source | expected closure not found in the main list, by id or by name (Heizkraftwerk Stuttgart-Münster GT 18, 23.4 MW) | 1 |
-| vocabulary | values outside the known lists of energy carriers, statuses and flags | 0 |
+| vocabulary | row without a record type (offshore wind, Ostsee, 1,522.75 MW) | 1 |
 
 What these numbers mean:
 
 - The list is clean in the checked fields for almost all units. The findings are few, and several
-  concern units that closed more than ten years ago.
+  concern units that closed more than ten years ago (Datteln and BNA1337a closed in 2013 and
+  2012). For Datteln the two sister units show 95 MW gross and net, so the 113 MW may be a typing
+  error, but the file does not say.
 - A duplicate flag is a reason to look, not proof of an error. Six of the ten groups are closed
   units with older BNA ids (for example four Brunsbüttel units of 63.5 MW from 1973), which are
-  probably real, identical blocks. The most interesting group is "Gasturbine 1 - GuD MPE": two
-  ids with the same capacity and year, one in operation and one temporarily closed.
-- The ids with hidden whitespace matter in practice: a plain join on the id silently drops those
-  units. The loader keeps the id as published and reports where it had to clean it.
+  probably real, identical blocks. Two groups deserve a closer look: "HKW III Block B" of
+  Stadtwerke Duisburg has two ids, both in operation, both 75.2 MW net and from 2004 (a third
+  record with the same name has 84 MW from 2005); if that is one unit registered twice, it is
+  counted twice in operating capacity. "Gasturbine 1 - GuD MPE" has two ids with the same capacity
+  and year, one in operation and one temporarily closed.
+- Ids with hidden whitespace break a plain join on the id. In this snapshot neither case breaks a
+  join between the files (SEE918810715130 is a new unit not yet in the main list, and BNA0705 is in
+  no change list), but the loader keeps every id as published and reports where it had to clean
+  it.
 - Stuttgart-Münster GT 18 is in the list of expected closures, while its sister units GT 16 and
   GT 17 (23.3 MW each) are in the main list and GT 18 is not, under any id or name.
-- Not flagged: 238 permanently closed units are published without an operator. The list appears
-  to leave the operator out for closed units, so the checks only require it for other units.
+- Operator: 238 of the 266 permanently closed units have none (all 117 with a BNA id and 121 of the
+  149 with a MaStR id), while every unit that is not closed has one. So the checks require an
+  operator only for units that are not closed, and the summary reports the closed ones as a count.
+- The vocabulary reference lists were built from this snapshot, so on this snapshot that check can
+  only flag rows outside the record types. Its use is on later downloads.
 
 ## The checks
 
@@ -90,9 +104,11 @@ with whitespace, and a changed layout.
 
 ## How it was built
 
-The code and this README were written with an AI coding assistant (Claude Code). Each finding
-above was checked by hand against the raw files, and the project was reviewed by a second AI
-model, which found bugs that are fixed in the commit history.
+I set the goal: a data-quality tool on public German energy data that I could show in an
+application. An AI coding assistant (Claude Code) chose the data source and wrote the code and
+this README. Every finding in the results table was checked against the raw file (the CSV line or
+the Excel cell); of the duplicate groups, HKW III Block B and Datteln were checked. A second AI
+model reviewed the project twice; the bugs it found are fixed in the commit history.
 
 ## Data and licence
 

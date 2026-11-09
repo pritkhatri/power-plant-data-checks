@@ -207,8 +207,19 @@ def build_db(plants, additions, closures, data_date, db=":memory:"):
     return con
 
 
+def decode(data: bytes) -> str:
+    """The file is published in a Windows encoding (cp1252/Latin-1). If a later release is UTF-8,
+    use that instead of silently garbling every umlaut."""
+    for encoding in ("utf-8", "cp1252"):
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return data.decode("latin1")  # never fails
+
+
 def load_files(raw_dir: str | Path = "data/raw", db=":memory:"):
     raw = Path(raw_dir)
-    plants, data_date = read_plant_csv((raw / "kraftwerksliste.csv").read_bytes().decode("latin1"))
+    plants, data_date = read_plant_csv(decode((raw / "kraftwerksliste.csv").read_bytes()))
     additions, closures = read_change_lists(raw / "zu_und_rueckbau.xlsx")
     return build_db(plants, additions, closures, data_date, db)

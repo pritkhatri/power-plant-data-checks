@@ -183,3 +183,32 @@ def test_write_results_files(tmp_path):
     summary = (tmp_path / "summary.md").read_text(encoding="utf-8")
     assert "26.06.2026" in summary and "| missing | (none found) | 0 |" in summary
     assert "Expected additions: 2, of which 1 have no id" in summary
+
+
+def test_closure_whitespace_and_record_type_on_all_rows():
+    plants = [
+        unit("SEE1"),
+        unit(
+            None,
+            record_type=None,
+            is_unit=0,
+            name=None,
+            operator=None,
+            energy_carrier="Wind (offshore)",
+        ),
+        unit(None, record_type="Sonderfall", is_unit=0, name=None, operator=None),
+        AGGREGATE,  # a known record type: fine
+    ]
+    closures = [change("SEE1", raw="SEE1\t"), change("NONAME", name=None)]
+    results = run_checks(build_db(plants, [], closures, "26.06.2026"))
+    assert ids(results["inconsistent"], "expected closures has whitespace") == ["SEE1"]
+    assert len([r for r in results["vocabulary"] if "record type" in r["issue"]]) == 2
+    # a closure with an unknown id and no name is still reported
+    assert ids(results["cross_source"], "not found in the main list") == ["NONAME"]
+
+
+def test_decode_prefers_utf8_and_falls_back():
+    from ppcheck.load import decode
+
+    assert decode("Niederaußem".encode()) == "Niederaußem"
+    assert decode("Niederaußem".encode("latin1")) == "Niederaußem"

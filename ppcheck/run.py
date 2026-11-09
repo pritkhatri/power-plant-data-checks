@@ -42,6 +42,21 @@ def counts(con: sqlite3.Connection) -> dict[str, int | str]:
             "SELECT COUNT(*) FROM plants p JOIN statuses s ON s.status = p.status "
             "WHERE p.is_unit = 1 AND p.operator IS NULL AND s.kind = 'closed'"
         ),
+        "closed_units": q(
+            "SELECT COUNT(*) FROM plants p JOIN statuses s ON s.status = p.status "
+            "WHERE p.is_unit = 1 AND s.kind = 'closed'"
+        ),
+        "other_without_operator": q(
+            "SELECT COUNT(*) FROM plants p LEFT JOIN statuses s ON s.status = p.status "
+            "WHERE p.is_unit = 1 AND p.operator IS NULL AND s.kind IS NOT 'closed'"
+        ),
+        "non_units": ", ".join(
+            f"{t or '(no record type)'}: {n}"
+            for t, n in con.execute(
+                "SELECT record_type, COUNT(*) FROM plants WHERE is_unit = 0 "
+                "GROUP BY record_type ORDER BY 2 DESC"
+            )
+        ),
     }
 
 
@@ -59,14 +74,18 @@ def write_results(results: dict, con: sqlite3.Connection, out_dir: str | Path = 
         f"Data date (Datenstand): {c['data_date']}.",
         "",
         f"- Power plant list: {c['rows']} rows, of which {c['units']} are unit records (an id or "
-        f"a name); the rest are aggregates of small units and are not checked. {c['bna_ids']} "
-        "unit ids are older BNA numbers, the rest MaStR numbers.",
+        f"a name). The other rows have neither and are treated as aggregates ({c['non_units']}); "
+        "the unit rules do not apply to them, the vocabulary check does. "
+        f"{c['bna_ids']} unit ids are older BNA numbers, the rest MaStR numbers.",
         f"- Expected additions: {c['additions']}, of which {c['additions_without_id']} have no id "
         f"yet and {c['additions_not_in_main_list']} have an id that is not in the main list "
         "(normal for units still being built).",
         f"- Expected closures: {c['closures']}, of which {c['closures_without_id']} have no id.",
-        f"- Not flagged: {c['closed_without_operator']} permanently closed units are published "
-        "without an operator; the list appears to leave the operator out for closed units.",
+        f"- Operator: {c['closed_without_operator']} of {c['closed_units']} permanently closed "
+        f"units have none, units that are not closed lacking one: {c['other_without_operator']}. "
+        "The operator is therefore only required for units that are not closed.",
+        "- The vocabulary check compares against reference lists built from this snapshot, so it "
+        "guards later downloads; on this snapshot it can only flag rows outside the record types.",
         "",
         "| check | issue | rows |",
         "|---|---|---|",

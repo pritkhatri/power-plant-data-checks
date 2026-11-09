@@ -12,8 +12,11 @@ SELECT 'vocabulary' AS check_name, unit_id, operator, name, status, field, issue
     SELECT unit_id, operator, name, status, 'renewable', 'renewable flag not Ja/Nein', renewable
       FROM plants WHERE renewable IS NOT NULL AND renewable NOT IN ('Ja', 'Nein')
     UNION ALL
-    SELECT unit_id, operator, name, status, 'record_type', 'unknown record type', record_type
+    -- on every row, not only units: aggregates must carry a record type too
+    SELECT unit_id, operator, name, status, 'record_type', 'missing or unknown record type',
+           COALESCE(record_type, '(empty)') || ': ' || COALESCE(energy_carrier, '?') || ', '
+           || COALESCE(state, '?') || ', ' || net_mw || ' MW'
       FROM plants
-     WHERE is_unit = 1 AND COALESCE(record_type, '') NOT IN (SELECT record_type FROM record_types)
+     WHERE COALESCE(record_type, '') NOT IN (SELECT record_type FROM record_types)
 )
 ORDER BY field, unit_id;
