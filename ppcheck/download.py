@@ -33,5 +33,5 @@ def download(raw_dir: str | Path = "data/raw", force: bool = False) -> dict:
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "downloaded": date.fromtimestamp(path.stat().st_mtime).isoformat(),
         }
-    (raw / "SOURCE.json").write_text(json.dumps(meta, indent=2))
+    (raw / "SOURCE.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     return meta

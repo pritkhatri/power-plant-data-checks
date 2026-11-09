@@ -7,18 +7,42 @@ import sqlite3
 from importlib import resources
 from pathlib import Path
 
-CHECKS = ["missing", "inconsistent", "duplicates", "cross_source"]
-FIELDS = ["check_name", "mastr_id", "operator", "name", "field", "issue"]
+CHECKS = ["missing", "inconsistent", "duplicates", "cross_source", "vocabulary"]
+FIELDS = ["check_name", "unit_id", "operator", "name", "status", "field", "issue", "detail"]
 
 
 def run_checks(con: sqlite3.Connection) -> dict[str, list[dict]]:
     out = {}
     for name in CHECKS:
-        sql = resources.files("ppcheck").joinpath(f"checks/{name}.sql").read_text()
+        sql = resources.files("ppcheck").joinpath(f"checks/{name}.sql").read_text(encoding="utf-8")
         cur = con.execute(sql)
         cols = [d[0] for d in cur.description]
         out[name] = [dict(zip(cols, row, strict=True)) for row in cur.fetchall()]
     return out
+
+
+def counts(con: sqlite3.Connection) -> dict[str, int | str]:
+    def q(sql: str):
+        return con.execute(sql).fetchone()[0]
+
+    return {
+        "data_date": q("SELECT value FROM meta WHERE key = 'data_date'"),
+        "rows": q("SELECT COUNT(*) FROM plants"),
+        "units": q("SELECT COUNT(*) FROM plants WHERE is_unit = 1"),
+        "bna_ids": q("SELECT COUNT(*) FROM plants WHERE unit_id LIKE 'BNA%'"),
+        "additions": q("SELECT COUNT(*) FROM additions"),
+        "additions_without_id": q("SELECT COUNT(*) FROM additions WHERE unit_id IS NULL"),
+        "additions_not_in_main_list": q(
+            "SELECT COUNT(*) FROM additions WHERE unit_id IS NOT NULL AND unit_id NOT IN "
+            "(SELECT unit_id FROM plants WHERE unit_id IS NOT NULL)"
+        ),
+        "closures": q("SELECT COUNT(*) FROM closures"),
+        "closures_without_id": q("SELECT COUNT(*) FROM closures WHERE unit_id IS NULL"),
+        "closed_without_operator": q(
+            "SELECT COUNT(*) FROM plants p JOIN statuses s ON s.status = p.status "
+            "WHERE p.is_unit = 1 AND p.operator IS NULL AND s.kind = 'closed'"
+        ),
+    }
 
 
 def write_results(results: dict, con: sqlite3.Connection, out_dir: str | Path = "results") -> None:
@@ -30,28 +54,19 @@ def write_results(results: dict, con: sqlite3.Connection, out_dir: str | Path = 
         for rows in results.values():
             w.writerows(rows)
 
-    n_plants = con.execute("SELECT COUNT(*) FROM plants").fetchone()[0]
-    q = lambda sql: con.execute(sql).fetchone()[0]  # noqa: E731
-    n_units = q("SELECT COUNT(*) FROM plants WHERE mastr_id IS NOT NULL")
-    n_add = q("SELECT COUNT(*) FROM additions")
-    n_close = q("SELECT COUNT(*) FROM closures")
-    n_add_missing = q(
-        "SELECT COUNT(*) FROM additions WHERE mastr_id NOT IN "
-        "(SELECT mastr_id FROM plants WHERE mastr_id IS NOT NULL)"
-    )
-    n_dec_no_op = q(
-        "SELECT COUNT(*) FROM plants WHERE mastr_id IS NOT NULL AND operator IS NULL "
-        "AND status LIKE 'endgültig stillgelegt%'"
-    )
-    data_date = con.execute("SELECT value FROM meta WHERE key='data_date'").fetchone()[0]
+    c = counts(con)
     lines = [
-        f"Data date (Datenstand): {data_date}. Rows in the power plant list: {n_plants}, of which "
-        f"{n_units} are unit records with a MaStR id (the rest are aggregates and are not "
-        f"checked). Expected additions: {n_add} ({n_add_missing} not yet in the main list, which "
-        f"is expected for new units). Expected closures: {n_close}.",
+        f"Data date (Datenstand): {c['data_date']}.",
         "",
-        f"Not flagged: {n_dec_no_op} permanently decommissioned units are published without an "
-        "operator; this looks like a publication choice, not an error.",
+        f"- Power plant list: {c['rows']} rows, of which {c['units']} are unit records (an id or "
+        f"a name); the rest are aggregates of small units and are not checked. {c['bna_ids']} "
+        "unit ids are older BNA numbers, the rest MaStR numbers.",
+        f"- Expected additions: {c['additions']}, of which {c['additions_without_id']} have no id "
+        f"yet and {c['additions_not_in_main_list']} have an id that is not in the main list "
+        "(normal for units still being built).",
+        f"- Expected closures: {c['closures']}, of which {c['closures_without_id']} have no id.",
+        f"- Not flagged: {c['closed_without_operator']} permanently closed units are published "
+        "without an operator; the list appears to leave the operator out for closed units.",
         "",
         "| check | issue | rows |",
         "|---|---|---|",
@@ -61,11 +76,10 @@ def write_results(results: dict, con: sqlite3.Connection, out_dir: str | Path = 
             lines.append(f"| {name} | (none found) | 0 |")
         issues: dict[str, int] = {}
         for r in rows:
-            key = r["issue"]
-            issues[key] = issues.get(key, 0) + 1
+            issues[r["issue"]] = issues.get(r["issue"], 0) + 1
         for issue, n in sorted(issues.items()):
             lines.append(f"| {name} | {issue} | {n} |")
-    (out / "summary.md").write_text("\n".join(lines) + "\n")
+    (out / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -83,12 +97,12 @@ def main(argv: list[str] | None = None) -> None:
     con = load_files("data/raw")
     results = run_checks(con)
     write_results(results, con)
-    data_date = con.execute("SELECT value FROM meta WHERE key='data_date'").fetchone()[0]
+    data_date = con.execute("SELECT value FROM meta WHERE key = 'data_date'").fetchone()[0]
     # which files these results came from, so a reader can check a later download against them
     Path("results/source.json").write_text(
-        json.dumps({"data_date": data_date, "files": source}, indent=2) + "\n"
+        json.dumps({"data_date": data_date, "files": source}, indent=2) + "\n", encoding="utf-8"
     )
-    print(Path("results/summary.md").read_text())
+    print(Path("results/summary.md").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

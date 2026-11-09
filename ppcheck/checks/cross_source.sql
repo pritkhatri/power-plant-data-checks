@@ -1,25 +1,38 @@
--- Outdated or conflicting between the two BNetzA files. For each case at least one of the two
--- is out of date for that unit, or the unit needs a closer look.
-SELECT 'cross_source' AS check_name, mastr_id, operator, name, field, issue FROM (
-    -- an expected addition (in construction or test operation) that the main list shows as
-    -- decommissioned or in reserve
-    SELECT a.mastr_id, p.operator, p.name, 'status' AS field,
-           'expected addition, but main list status is: ' || p.status AS issue
-      FROM additions a JOIN plants p ON p.mastr_id = a.mastr_id
-     WHERE p.status <> 'InBetrieb'
+-- The main list and the lists of expected additions and closures disagree. In each case at
+-- least one of the files is out of date for that unit, or the unit needs a closer look.
+-- Units are matched by id; an unmatched closure is also looked up by name.
+SELECT 'cross_source' AS check_name, unit_id, operator, name, status, field, issue, detail FROM (
+    SELECT a.unit_id, a.operator, a.name, p.status, 'status' AS field,
+           'expected addition, but the main list shows it closed or in reserve' AS issue,
+           'expected start ' || a.expected_year AS detail
+      FROM additions a JOIN plants p ON p.unit_id = a.unit_id
+      LEFT JOIN statuses s ON s.status = p.status
+     WHERE s.kind IS NULL OR s.kind IN ('reserve', 'temporarily closed', 'closing', 'closed')
     UNION ALL
-    -- an expected closure (2026-2029) that the main list already shows as permanently closed
-    SELECT c.mastr_id, p.operator, p.name, 'status',
-           'expected closure, but already permanently decommissioned in the main list'
-      FROM closures c JOIN plants p ON p.mastr_id = c.mastr_id
-     WHERE p.status LIKE 'endgültig stillgelegt%'
+    SELECT c.unit_id, c.operator, c.name, p.status, 'status',
+           'expected closure, but already permanently closed in the main list',
+           'closed in ' || p.year_decommissioned
+      FROM closures c JOIN plants p ON p.unit_id = c.unit_id
+      JOIN statuses s ON s.status = p.status
+     WHERE s.kind = 'closed'
     UNION ALL
-    -- an expected closure that is not in the main list at all
-    SELECT c.mastr_id, c.operator, c.name, 'mastr_id', 'expected closure not found in the main list'
-      FROM closures c WHERE c.mastr_id NOT IN (SELECT mastr_id FROM plants WHERE mastr_id IS NOT NULL)
+    SELECT c.unit_id, c.operator, c.name, NULL, 'unit_id',
+           'expected closure not found in the main list, by id or by name',
+           c.mw || ' MW, ' || c.place
+      FROM closures c
+     WHERE c.unit_id IS NOT NULL
+       AND c.unit_id NOT IN (SELECT unit_id FROM plants WHERE unit_id IS NOT NULL)
+       AND lower(trim(c.name)) NOT IN (SELECT lower(trim(name)) FROM plants WHERE name IS NOT NULL)
     UNION ALL
-    -- a unit listed both as an expected addition and as an expected closure
-    SELECT a.mastr_id, a.operator, a.name, 'mastr_id', 'listed as expected addition and as expected closure'
-      FROM additions a JOIN closures c ON c.mastr_id = a.mastr_id
+    SELECT c.unit_id, c.operator, c.name, p.status, 'unit_id',
+           'expected closure listed in the main list under a different id',
+           'main list id ' || p.unit_id
+      FROM closures c JOIN plants p ON lower(trim(p.name)) = lower(trim(c.name))
+     WHERE c.unit_id IS NOT NULL
+       AND c.unit_id NOT IN (SELECT unit_id FROM plants WHERE unit_id IS NOT NULL)
+    UNION ALL
+    SELECT a.unit_id, a.operator, a.name, NULL, 'unit_id',
+           'listed as expected addition and as expected closure', NULL
+      FROM additions a JOIN closures c ON c.unit_id = a.unit_id
 )
-ORDER BY issue, mastr_id;
+ORDER BY issue, unit_id;
