@@ -7,7 +7,9 @@ import sqlite3
 from importlib import resources
 from pathlib import Path
 
-CHECKS = ["missing", "inconsistent", "duplicates", "cross_source", "vocabulary"]
+from .impact import capacity_in_service, impact
+
+CHECKS = ["missing", "inconsistent", "duplicates", "cross_source", "vocabulary", "capacity_ratio"]
 FIELDS = ["check_name", "unit_id", "operator", "name", "status", "field", "issue", "detail"]
 
 
@@ -119,6 +121,20 @@ def write_results(results: dict, con: sqlite3.Connection, out_dir: str | Path = 
             issues[r["issue"]] = issues.get(r["issue"], 0) + 1
         for issue, n in sorted(issues.items()):
             lines.append(f"| {name} | {issue} | {n} |")
+    lines += [
+        "",
+        "Capacity behind the findings (net MW; see `ppcheck/impact.py` for how it is counted). "
+        "For scale: all rows that are not permanently closed add up to "
+        f"{capacity_in_service(con):,.0f} MW.",
+        "",
+        "| check | issue | findings | MW at stake | of which not closed |",
+        "|---|---|---|---|---|",
+    ]
+    for e in impact(con, results):
+        lines.append(
+            f"| {e['check']} | {e['issue']} | {e['findings']} | {e['mw']:,.1f} "
+            f"| {e['mw_not_closed']:,.1f} |"
+        )
     (out / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

@@ -230,3 +230,58 @@ def test_duplicate_detail_shows_technology():
               unit("T2", name="Block", technology="GasturbinenmitAbhitzekessel")]  # fmt: skip
     rows = run_checks(build_db(plants, [], [], "26.06.2026"))["duplicates"]
     assert all("GasturbinenmitAbhitzekessel" in r["detail"] for r in rows)
+
+
+def test_impact_counts_capacity_and_whether_it_is_closed():
+    from ppcheck.impact import capacity_in_service, impact
+
+    plants = [
+        unit("A1", net_mw=120.0, gross_mw=100.0),  # net above gross, in operation: 120 MW
+        unit("A2", net_mw=80.0, gross_mw=70.0, status=CLOSED, year_decommissioned=2013),  # closed
+        # three identical units: two of them could be double-counted (2 x 50 MW), one is closed
+        unit("T1", name="Twin", net_mw=50.0),
+        unit("T2", name="Twin", net_mw=50.0),
+        unit("T3", name="Twin", net_mw=50.0, status=CLOSED, year_decommissioned=2010),
+        # no record type, in operation, no id: found again through its record type
+        unit(None, record_type=None, is_unit=0, name=None, operator=None, net_mw=500.0),
+    ]
+    con = build_db(plants, [], [change("GONE", name="Gone", mw=23.4)], "26.06.2026")
+    rows = {(e["check"], e["issue"]): e for e in impact(con, run_checks(con))}
+
+    over = rows[("inconsistent", "net capacity above gross capacity")]
+    assert (over["findings"], over["mw"], over["mw_not_closed"]) == (2, 200.0, 120.0)
+
+    twins = rows[("duplicates", "same operator, name, capacity and year as another unit")]
+    assert (twins["findings"], twins["mw"]) == (3, 100.0)  # n - 1 = 2 units of 50 MW
+    assert twins["mw_not_closed"] == 100.0  # two are not closed, so both could be in service
+
+    record = rows[("vocabulary", "missing or unknown record type")]
+    assert (record["mw"], record["mw_not_closed"]) == (500.0, 500.0)
+
+    gone = rows[("cross_source", "expected closure not found in the main list, by id or by name")]
+    assert gone["mw"] == 23.4  # taken from the list of expected closures
+
+    # in service: A1 120 + T1 50 + T2 50 + the 500 MW row; the two closed units are left out
+    assert capacity_in_service(con) == 720.0
+
+
+def test_capacity_ratio_flags_only_low_nonclosed_units_and_preserves_operator():
+    from ppcheck.impact import impact
+
+    plants = [
+        unit("CR1", operator="Wuppertal Energie", net_mw=40.0, gross_mw=100.0),
+        unit("CR2", net_mw=90.0, gross_mw=100.0),  # normal ratio
+        unit("CR3", net_mw=40.0, gross_mw=100.0, status=CLOSED),  # closed
+        unit("CR4", net_mw=0.0, gross_mw=0.0),  # ratio is undefined
+        unit("CR5", net_mw=40.0, gross_mw=100.0, status="unclassified status"),
+    ]
+    con = build_db(plants, [], [], "26.06.2026")
+    results = run_checks(con)
+
+    rows = results["capacity_ratio"]
+    assert [row["unit_id"] for row in rows] == ["CR1", "CR5"]
+    assert rows[0]["operator"] == "Wuppertal Energie"
+    assert "net 40.0 MW, gross 100.0 MW" in rows[0]["detail"]
+
+    entry = next(e for e in impact(con, results) if e["check"] == "capacity_ratio")
+    assert (entry["findings"], entry["mw"], entry["mw_not_closed"]) == (2, 80.0, 80.0)

@@ -30,23 +30,39 @@ shows each unit's status and the values behind each finding.
 | duplicates | several ids with the same operator, name, capacity and commissioning year | 28 (10 groups) |
 | cross_source | expected closure not found in the main list, by id or by name (Heizkraftwerk Stuttgart-Münster GT 18, 23.4 MW) | 1 |
 | vocabulary | row without a record type (offshore wind, Ostsee, 1,522.75 MW) | 1 |
+| capacity_ratio | net capacity below half of gross on units in operation (Wuppertal Kraftwerk Turbine 3 and 4, MHKW Mannheim Generator TD0 and TE0) | 4 |
 
 What these numbers mean:
 
+- Capacity: `results/summary.md` has a table with the net MW behind each finding and how much of
+  it is not closed (all rows not permanently closed add up to 294,654 MW). Most findings sit on
+  closed units, but one does not: the row without a record type is 1,522.75 MW of offshore wind
+  in the Baltic Sea, in operation, with no id, no name and a sea instead of a state. That looks
+  like the aggregated rows (my reading; the file does not say), whose record type is empty here.
+  Anyone who filters the list by record type loses it: it is 14% of the offshore wind capacity
+  in the list (the rest, 9,078 MW, is in the aggregated rows). The other findings are small: the
+  duplicate candidates could double-count 764 MW if every group were real, at most 120 MW of it
+  not closed, the four units with a low net-to-gross ratio add 19.5 MW (all in operation), the
+  ids with whitespace and the net-above-gross unit are on closed units or on a 60 MW unit not
+  yet built, and the missing year is on a closed unit.
 - The list is clean in the checked fields for almost all units. The findings are few, and several
   concern units that closed more than ten years ago (Datteln and BNA1337a closed in 2013 and
   2012). For Datteln one of the two values is probably wrong; the file does not say which (the
   unit is from 1969, its two sister units with 95 MW gross and net from 1964).
 - A duplicate flag is a reason to look, not proof of an error. Six of the ten groups are closed
   units with older BNA ids (for example four Brunsbüttel units of 63.5 MW from 1973), which are
-  probably real, identical blocks. "HKW III Block B" of Stadtwerke Duisburg is also probably
-  real: its two flagged records are gas turbines with heat-recovery boilers (75.2 MW each, 2004)
-  and a third record under the same name is a steam turbine (84 MW, 2005), the usual layout of a
+  probably real, identical blocks. "HKW III Block B" of Stadtwerke Duisburg is also probably real:
+  its two flagged records are gas turbines with heat-recovery boilers (75.2 MW each, 2004) and a
+  third record under the same name is a steam turbine (84 MW, 2005), the usual layout of a
   combined-cycle block with two gas turbines and one steam turbine, where each turbine is
-  registered as its own unit. The group worth a closer look is "Gasturbine 1 - GuD MPE": two
-  records with identical data from 2005, one in operation and one temporarily closed, while the
-  same site has one "Gasturbine 2" from 2005 (closed) and one from 2021. The file does not say
-  which "Gasturbine 1" record is right.
+  registered as its own unit. The two ENGIE groups (names SEDE607510036 with five records and
+  SEDE607510037 with four, combustion engines of 4.4 to 4.5 MW from 2018, in operation) are
+  probably real as well: the name is a code, not a plant name, so these are likely several
+  identical engines at one site, as in a combined heat and power plant; the file cannot confirm
+  it. The group worth a closer look is "Gasturbine 1 - GuD MPE": two records with identical data
+  from 2005, one in operation and one temporarily closed, while the same site has one "Gasturbine
+  2" from 2005 (closed) and one from 2021. The file does not say which "Gasturbine 1" record is
+  right.
 - Ids with hidden whitespace break a plain join on the id. In this snapshot neither case breaks a
   join between the files (SEE918810715130 is a new unit not yet in the main list, and BNA0705 is in
   no change list), but the loader keeps every id as published and reports where it had to clean
@@ -76,6 +92,7 @@ temporarily closed, closing and closed) are reference tables in `ppcheck/load.py
 | `duplicates.sql` | the same id twice, or different ids with the same operator, name, capacity and commissioning year (compared NULL-safely) |
 | `cross_source.sql` | the files disagree: an expected addition shown as closed or in reserve, an expected closure already closed, not in the main list, or listed under another id, a unit both added and closed |
 | `vocabulary.sql` | energy carriers, statuses, renewable flags or record types not in the reference lists, so a new or misspelled value cannot make a rule silently pass |
+| `capacity_ratio.sql` | units that are not closed whose net capacity is below half of their gross capacity (the 5th percentile of the ratio is 0.82); a reason to look, not an error, since own consumption can explain a low ratio |
 
 Example, from `cross_source.sql`:
 
@@ -114,12 +131,14 @@ with whitespace, and a changed layout.
 
 I set the goal: a data-quality tool on public German energy data. The code was written by an AI
 coding assistant (Claude Code) under my direction. I reviewed every line and checked that the
-output is correct. The assistant also picked the data source and checked the findings against the
-raw files: the CSV lines, a byte dump for the trailing space, the Excel cell for the tab, and a
-byte-level search for GT 18. Every finding in the results table was checked that way except the
-duplicate groups, of which three (Datteln, HKW III Block B, GuD MPE) were. A second AI model
-reviewed the project three times; the bugs and the wrong interpretations it found are fixed in the
-commit history.
+output is correct. I also wrote `capacity_ratio.sql` and its test myself, then reviewed the rule
+and validated its results against the real data. The assistant also picked the data source and
+checked the findings against the raw files: the CSV lines, a byte dump for the trailing space, the
+Excel cell for the tab, and a byte-level search for GT 18. Every finding in the results table was
+checked that way except the duplicate groups, of which three (Datteln, HKW III Block B, GuD MPE)
+were, and the `capacity_ratio` findings, which I validated against the real data. A second AI
+model reviewed the project three times; the bugs and the wrong interpretations it found are fixed
+in the commit history.
 
 ## Data and licence
 
@@ -144,7 +163,5 @@ Code: MIT, see `LICENSE`.
 
 ## Roadmap
 
-- Fuzzy duplicate matching on plant names (string similarity or embeddings), evaluated on a
-  hand-labelled set of pairs with precision and recall, compared against the exact-match baseline.
-- Anomaly detection on capacity per technology or energy carrier, compared with the rule-based
-  checks.
+- Fuzzy duplicate matching on plant names (string similarity), evaluated on a hand-labelled set
+  of pairs with precision and recall, compared against the exact-match baseline.

@@ -33,3 +33,7 @@ duplicates,SEE915885358156,Stadtwerke Duisburg AG,HKW III  Block B,InBetrieb,ope
 duplicates,SEE922855765289,Stadtwerke Duisburg AG,HKW III  Block B,InBetrieb,operator+name+net_mw+year,"same operator, name, capacity and year as another unit","2 units, 75.2 MW, commissioned 2004, GasturbinenmitAbhitzekessel"
 cross_source,SEE985887784048,EnBW Energie Baden-Württemberg AG,Heizkraftwerk Stuttgart-Münster GT 18,,unit_id,"expected closure not found in the main list, by id or by name","23.4 MW, Stuttgart"
 vocabulary,,,,InBetrieb,record_type,missing or unknown record type,"(empty): Wind (offshore), Ostsee, 1522.75 MW"
+capacity_ratio,SEE953730197888,MVV Umwelt Asset GmbH,MHKW Mannheim Generator TD0,InBetrieb,net_mw/gross_mw,Suspiciously low net-to-gross capacity ratio,"net 4.26 MW, gross 8.85 MW (ratio 0.481)"
+capacity_ratio,SEE948093740512,MVV Umwelt Asset GmbH,MHKW Mannheim Generator TE0,InBetrieb,net_mw/gross_mw,Suspiciously low net-to-gross capacity ratio,"net 4.26 MW, gross 8.85 MW (ratio 0.481)"
+capacity_ratio,SEE995596088894,Thermo Fisher Scientific BPG GmbH,Wuppertal Kraftwerk Turbine 3,InBetrieb,net_mw/gross_mw,Suspiciously low net-to-gross capacity ratio,"net 5.5 MW, gross 12.0 MW (ratio 0.458)"
+capacity_ratio,SEE945933440847,Thermo Fisher Scientific BPG GmbH,Wuppertal Kraftwerk Turbine 4,InBetrieb,net_mw/gross_mw,Suspiciously low net-to-gross capacity ratio,"net 5.5 MW, gross 17.0 MW (ratio 0.324)"

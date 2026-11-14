@@ -15,3 +15,17 @@ Data date (Datenstand): 26.06.2026.
 | duplicates | same operator, name, capacity and year as another unit | 28 |
 | cross_source | expected closure not found in the main list, by id or by name | 1 |
 | vocabulary | missing or unknown record type | 1 |
+| capacity_ratio | Suspiciously low net-to-gross capacity ratio | 4 |
+
+Capacity behind the findings (net MW; see `ppcheck/impact.py` for how it is counted). For scale: all rows that are not permanently closed add up to 294,654 MW.
+
+| check | issue | findings | MW at stake | of which not closed |
+|---|---|---|---|---|
+| capacity_ratio | Suspiciously low net-to-gross capacity ratio | 4 | 19.5 | 19.5 |
+| cross_source | expected closure not found in the main list, by id or by name | 1 | 23.4 | 23.4 |
+| duplicates | same operator, name, capacity and year as another unit | 28 | 764.5 | 120.3 |
+| inconsistent | id in the list of expected additions has whitespace | 1 | 60.0 | 60.0 |
+| inconsistent | id in the main list has whitespace | 1 | 297.0 | 0.0 |
+| inconsistent | net capacity above gross capacity | 1 | 113.0 | 0.0 |
+| missing | no commissioning year | 1 | 27.0 | 0.0 |
+| vocabulary | missing or unknown record type | 1 | 1,522.8 | 1,522.8 |
